@@ -20,7 +20,7 @@ opts = OptionParser.new do |opt|
     cli_params[:domain] = domain
   end
 
-  opt.on('-v', '--version', 'Versjon') { puts "Brreg query version 0.1"; exit }
+  opt.on('-v', '--version', 'Versjon') { puts "Brreg query version 0.1.1"; exit }
 end
 opts.parse!
 
@@ -31,13 +31,14 @@ module Brreg
     if res.is_a?(Net::HTTPSuccess)
       jsonres = JSON.parse(res.body)
       if jsonres['posts'].to_i > 0
+        company = jsonres['entries'].first
         puts "Viser oppføring for orgnr #{orgnr}"
         puts '...............'
-        puts jsonres['entries'].first['navn']
-        puts jsonres['entries'].first['forretningsadr']
-        puts jsonres['entries'].first['forradrpostnr'] + ' ' + jsonres['entries'].first['forradrpoststed']
-        puts jsonres['entries'].first['postadresse']
-        puts jsonres['entries'].first['ppostnr'] + ' ' + jsonres['entries'].first['ppoststed']
+        puts company['navn']
+        puts company['forretningsadr']
+        puts company['forradrpostnr'] + ' ' + company['forradrpoststed']
+        puts company['postadresse']
+        puts company['ppostnr'] + ' ' + company['ppoststed']
       else
         puts "Fant ingen oppføring for #{orgnr}"
       end
