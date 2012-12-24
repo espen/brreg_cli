@@ -8,6 +8,8 @@ require 'json'
 cli_params = {}
 
 opts = OptionParser.new do |opt|
+  opt.banner = "Usage: brreg [options] OR brreg orgnr/query/domain"
+
   opt.on('-n', '--orgnr ORGNR', 'Organisasjonsnummer') do |orgnr|
     cli_params[:orgnr] = orgnr.to_i
   end
@@ -20,9 +22,14 @@ opts = OptionParser.new do |opt|
     cli_params[:domain] = domain
   end
 
-  opt.on('-v', '--version', 'Versjon') { puts "Brreg query version 0.1.1"; exit }
+  opt.on('-v', '--version', 'Versjon') { puts "Brreg query version 0.1.2"; exit }
 end
-opts.parse!
+begin
+  opts.parse!
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument
+  puts opts
+  exit
+end
 
 module Brreg
   BrregURI = 'http://hotell.difi.no/api/json/brreg/enhetsregisteret'
@@ -84,6 +91,10 @@ module Brreg
   end
 end
 
+def numeric?(object)
+  true if Float(object) rescue false
+end
+
 
 if cli_params.length > 0
   if cli_params[:orgnr]
@@ -93,4 +104,15 @@ if cli_params.length > 0
   elsif cli_params[:domain]
     Brreg.find_by_domain( cli_params[:domain])
   end
+elsif ARGV.length > 0
+  input = ARGV.first
+  if numeric?(input)
+    Brreg.find_by_orgnr( input.to_i )
+  elsif input.include?('.no')
+    Brreg.find_by_domain( input )
+  else
+    Brreg.find( input )
+  end
+else
+  puts opts
 end
