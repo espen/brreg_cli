@@ -54,8 +54,8 @@ module Brreg
 
   def self.find_by_domain(domain)
     res = `whois #{domain}`
-    res.encode!('UTF-8', 'UTF-8', :invalid => :replace)
-    if res.gsub('Id Type').first
+    res.force_encoding('BINARY').encode!('UTF-8', :invalid => :replace, :undef => :replace)
+    if res.gsub('Id Number').first
       s = /\Id Number..................:\s(\d{9})/
       Brreg.find_by_orgnr( res.scan(s).first.first.to_i )
       puts "\nBasert på Whois fra domenet #{domain}"
