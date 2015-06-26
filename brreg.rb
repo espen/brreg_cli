@@ -2,8 +2,7 @@
 # encoding: utf-8
 
 require 'optparse'
-require 'net/http'
-require 'json'
+require 'brreg'
 
 cli_params = {}
 
@@ -29,66 +28,6 @@ begin
 rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   puts opts
   exit
-end
-
-module Brreg
-  BrregURI = 'http://hotell.difi.no/api/json/brreg/enhetsregisteret'
-  def self.find_by_orgnr(orgnr)
-    res = get_json( { :orgnr => orgnr } )
-    if res.is_a?(Net::HTTPSuccess)
-      jsonres = JSON.parse(res.body)
-      if jsonres['posts'].to_i > 0
-        company = jsonres['entries'].first
-        puts "Viser oppføring for orgnr #{orgnr}"
-        puts '...............'
-        puts company['navn']
-        puts company['forretningsadr']
-        puts company['forradrpostnr'] + ' ' + company['forradrpoststed']
-        puts company['postadresse']
-        puts company['ppostnr'] + ' ' + company['ppoststed']
-      else
-        puts "Fant ingen oppføring for #{orgnr}"
-      end
-    end
-  end
-
-  def self.find_by_domain(domain)
-    res = `whois #{domain}`
-    res.force_encoding('BINARY').encode!('UTF-8', :invalid => :replace, :undef => :replace)
-    if res.gsub('Id Number').first
-      s = /\Id Number..................:\s(\d{9})/
-      Brreg.find_by_orgnr( res.scan(s).first.first.to_i )
-      puts "\nBasert på Whois fra domenet #{domain}"
-    elsif res.gsub('% No match').first
-      puts "Domenet #{domain} er ikke registert"
-    else
-      puts "Ukjent svar fra Whois. Det er kun mulig å søke på .no domener."
-    end
-  end
-
-  def self.find(query)
-    puts "Søker etter '#{query}'"
-    puts '...............'
-    res = self.get_json( { :query => query } )
-    if res.is_a?(Net::HTTPSuccess)
-      jsonres = JSON.parse(res.body)
-      if jsonres['posts'].to_i > 0
-        for entry in jsonres['entries']
-          puts entry['orgnr'] + ' ' + entry['navn']
-        end
-      else
-        puts "Fant ingen oppføringer med navn #{query}"
-      end
-    end
-  end
-
-  private
-
-  def self.get_json(params)
-    uri = URI(BrregURI)
-    uri.query = URI.encode_www_form(params)
-    Net::HTTP.get_response(uri)
-  end
 end
 
 def numeric?(object)
